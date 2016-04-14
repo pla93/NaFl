@@ -201,30 +201,18 @@ def fuzzing_loop():
             analyze_crash(cmd)
 
 
-def main():
-    """
-    This creates a shared memory region
-    NOT backed up by a file
-    """
+def doInitStuff():
     global shm
     global shm_size
     global history_bitmap
     global ml
 
-    # Initialization stuff
     ml = initialize_logging()
     parse_config_file()
     s_uint32 = utils.get_size_uint32()
     bitmap_size = 65536
     shm_size = bitmap_size * s_uint32  # architecture dependent :)
     shm_name = "Local\\NaFlSharedMemory"
-
-    ml.info("[*] Restoring saved bitmap from pickle file...")
-    history_bitmap = fileops.restore_saved_bitmap()
-
-    if not history_bitmap:
-        ml.info("[x] Failed to restore saved bitmap! Starting from scratch.")
-        history_bitmap = array('L', [0] * bitmap_size)
 
     shm = mmap.mmap(0,
                     shm_size,
@@ -236,13 +224,33 @@ def main():
         # Oops!
         ml.info('[x] Could not create the shared memory region')
         ml.info('[x] Aborting...')
-        return
+        exit()
+
+    ml.info("[*] Restoring saved bitmap from pickle file...")
+    history_bitmap = fileops.restore_saved_bitmap()
+
+    if not history_bitmap:
+        ml.info("[x] Failed to restore saved bitmap! Starting from scratch.")
+        history_bitmap = array('L', [0] * bitmap_size)
 
     # Some logging :)
     ml.info("")
     ml.info("=" * 80)
     ml.info("Started fuzzing: %s" % myConfig.cfg.get('target_info', 'filename'))
     ml.info("=" * 80)
+
+
+def main():
+    """
+    This creates a shared memory region
+    NOT backed up by a file
+    """
+    global shm
+    global shm_size
+    global history_bitmap
+    global ml
+
+    doInitStuff()
 
     try:
         fuzzing_loop()  # never returns
