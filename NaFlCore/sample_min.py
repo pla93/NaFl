@@ -56,7 +56,7 @@ while len(cov_map) > 0:
 old_count = len(os.listdir(samples_dir))
 new_count = len(os.listdir(min_samples_dir))
 
-print "### Reduced samples from %s files to %s files keeping code coverage of %s covered paths. ###" % (old_count, new_count, max_coverage)
+print "### Reduced samples from %s files to %s files keeping code coverage of %s / 64k covered paths. ###" % (old_count, new_count, len(max_coverage))
 
 
 
