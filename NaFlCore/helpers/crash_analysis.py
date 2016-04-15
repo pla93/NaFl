@@ -103,6 +103,8 @@ def crash_event_handler(event):
         communications.add_crash(crash_properties)
         fileops.save_crash_file(crash_filename, 'crashes')
 
+from time import sleep
+
 
 def analyze_crash(cmd):
     """
@@ -131,7 +133,8 @@ def analyze_crash(cmd):
         debug.execv(cmd)
 
         # Wait for the debugee to finish.
-        debug.loop()
+        #debug.loop()
+        sleep(10)
 
     # Stop the debugger.
     finally:
