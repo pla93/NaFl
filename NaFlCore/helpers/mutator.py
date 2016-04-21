@@ -24,6 +24,7 @@ class myFileGenerator():
         self.debug = debug
         parent = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
         self.samples_dir = os.path.join(parent, 'samples')
+        #self.samples_dir = os.path.join(parent, 'min_samples')
         self.mutations_dir = os.path.join(parent, 'mutations')
         self.cthulhu = Cthulhu(self.debug)
 

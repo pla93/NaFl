@@ -36,6 +36,9 @@ myConfig = nConfig()
 cmd_l = []
 ml = None  # main logger
 
+# testing
+cycles_run = 0
+
 
 def initialize_logging():
     """
@@ -123,6 +126,8 @@ def run_under_pin(mutation_filename):
     gets the bitmap representing execution
     :returns: this bitmap
     """
+    global cycles_run
+
     cmd_l.append(mutation_filename)
     subprocess.call(cmd_l, shell = False)
     cmd_l.pop()  # remove the filename from cmd :)
@@ -133,6 +138,8 @@ def run_under_pin(mutation_filename):
 
     # This coerces somehow the bitmap to an array of ulong's
     curr_bitmap = array('L', shm.read(shm_size))  # C ulong (4 bytes)
+
+    cycles_run += 1
 
     return curr_bitmap
 
@@ -164,6 +171,9 @@ def fuzzing_loop():
         # * instrumented process exits
         # * instrumented process crashes
         # * timeout expires (implemented in PinTool)
+        global cycles_run
+        if cycles_run > 1200:
+            raise KeyboardInterrupt("CTRL-C!")
 
         m_id += 1
 
