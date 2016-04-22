@@ -20,8 +20,10 @@ from helpers import utils
 from helpers import fileops
 from helpers.config import nConfig
 from helpers.mutator import myFileGenerator
-from helpers.queue import mutationQueue, FileToMutate
+from helpers.queue import mutationQueue, FileToMutate, processedQueue
 from helpers.crash_analysis import analyze_crash
+from CreateMutationGraph import createMutationGraph
+from helpers.queue import clean_queues
 
 
 # Modified in config file
@@ -172,14 +174,46 @@ def fuzzing_loop():
         # * instrumented process crashes
         # * timeout expires (implemented in PinTool)
         global cycles_run
-        if cycles_run > 1200:
+
+        if cycles_run > 1999:
+            ml.info("[*] finished test cycle count: %s" % (cycles_run))
+            ml.info("[+] mutation queue length: %s" % len(mutationQueue.queue))
+            ml.info("[+] processed queue length: %s" % len(processedQueue.queue))
+
+            createMutationGraph(*[processedQueue,mutationQueue])
             raise KeyboardInterrupt("CTRL-C!")
+
+        if (cycles_run % 200 == 0) and (cycles_run > 0):
+            # tmp = get_queue_element_by_id(307,mutationQueue)
+            #
+            # new_file = FileToMutate(tmp.priority, "DUP1", tmp.id + 1000, tmp.bitmap)
+            # mutationQueue.put(new_file)
+            # tmp_p_id = get_parent_by_id(tmp.id,processedQueue)
+            # get_queue_element_by_id(tmp_p_id,processedQueue).new_descendant(new_file)
+            #
+            # createMutationGraph(*[processedQueue,mutationQueue])
+
+            createMutationGraph(*[processedQueue,mutationQueue])
+            ml.info("[*] cycles run: %s" % (cycles_run))
+            ml.info("[+] mutation queue length: %s" % len(mutationQueue.queue))
+            ml.info("[+] processed queue length: %s" % len(processedQueue.queue))
+            ml.info("[+] started cleaning queue ...")
+
+            clean_queues()
+
+            ml.info("[*] finished cleaning queue ...")
+            ml.info("[+] mutation queue length: %s" % len(mutationQueue.queue))
+            ml.info("[+] processed queue length: %s" % len(processedQueue.queue))
+            ml.info("#######")
+
+            createMutationGraph(*[processedQueue,mutationQueue])
+        
 
         m_id += 1
 
         # This generates the mutations and
         # it writes the current test file
-        mutation_filename = filegen.write_test_case()
+        mutation_filename, parent = filegen.write_test_case()
 
         if mutation_filename:
             mutation_bitmap = run_under_pin(mutation_filename)
@@ -196,11 +230,15 @@ def fuzzing_loop():
 
         elif interesting == 1:
             # ml.info("*** id: %d: Interesting file. Caused a whole new path. ***" % m_id)
-            mutationQueue.put(FileToMutate(1, mutation_filename, m_id, mutation_bitmap))
+            new_file = FileToMutate(1, mutation_filename, m_id, mutation_bitmap)
+            mutationQueue.put(new_file)
+            parent.new_descendant(new_file)
 
         elif interesting == 2:
             # ml.info("*** id: %d: The hit count moved to another bin. ***" % m_id)
-            mutationQueue.put(FileToMutate(2, mutation_filename, m_id, mutation_bitmap))
+            new_file = FileToMutate(2, mutation_filename, m_id, mutation_bitmap)
+            mutationQueue.put(new_file)
+            parent.new_descendant(new_file)
 
         elif interesting == 3:
             ml.info('**** CRASH ****' * 4)

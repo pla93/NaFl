@@ -31,7 +31,7 @@ class myFileGenerator():
         # Initialization. We will work on the mutations directory
         fileops.copy_all_files(self.samples_dir, self.mutations_dir)
 
-    def _get_input_filename(self):
+    def _get_queue_entry(self):
         """
         Gets a filename from the Mutation Queue
         Moves the Queue elements around
@@ -46,13 +46,14 @@ class myFileGenerator():
         e = mutationQueue.get()
         processedQueue.put(e)
 
-        return e.filename
+        return e
 
     def _gen_mutation(self):
         """
         Generates mutated contents from a sample file
         """
-        input_file = self._get_input_filename()
+        queue_entry = self._get_queue_entry()
+        input_file = queue_entry.filename
 
         # Get the file extension
         extension = input_file.split('.')[-1]
@@ -68,21 +69,21 @@ class myFileGenerator():
         # Create an abomination!
         m = self.cthulhu.yield_mutation(original_contents)
 
-        return m
+        return m, queue_entry
 
     def write_test_case(self):
         """
         It creates the test case contents
         :return: Tuple (original, mutated) filenames or None
         """
-        mutated_contents = self._gen_mutation()
+        mutated_contents, file = self._gen_mutation()
         mutation_filename = os.path.join(self.mutations_dir, self.mutated_file_name)
 
         try:
             with open(mutation_filename, 'wb') as fh:
                 fh.write(mutated_contents)
 
-            return mutation_filename
+            return (mutation_filename, file)
 
         except:
             return None
