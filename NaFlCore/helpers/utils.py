@@ -127,3 +127,15 @@ def hit_bin(n):
         return 7
     else:
         return 8
+
+
+def strings(buf, min_string_length=4):
+        tmp_str = ""
+        for offset, byte in enumerate(buf):
+            alphabet = string.digits + string.letters + '/\()[]'
+            if byte in alphabet:
+                tmp_str += byte
+                continue
+            if len(tmp_str) >= min_string_length:
+                yield (tmp_str, offset-len(tmp_str))
+            tmp_str = ""

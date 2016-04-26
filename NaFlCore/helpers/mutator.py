@@ -9,7 +9,7 @@ import itertools  # cycle :)
 
 import fileops
 from helpers.queue import mutationQueue, processedQueue
-from helpers.utils import random_alphabetical_string
+from helpers.utils import random_alphabetical_string, strings
 from helpers.plugin_loader import get_plugins, load_plugin
 
 
@@ -119,7 +119,7 @@ class Cthulhu(object):
 
         self.cy_strings = itertools.cycle(self.get_common_strings())
         self.buffer_mutations = [
-            #self.substitute_string,
+            self.substitute_string,
             self.mutate_token,
             self.delete_block,
             self.swap_blocks,
@@ -226,17 +226,23 @@ class Cthulhu(object):
     def substitute_string(self, buf):
         """
         Simple substitution with *standard tokens*
-        This is equivalent to smash the original bytes
         """
         replacement = self.cy_strings.next()
         rlen = len(replacement)
-        offset = random.randrange(len(buf))
 
-        mod_buf = buf[ : offset] + replacement
-        # Only in case the replacement fits into
-        # the original buffer
-        if offset + rlen < len(buf):
-            mod_buf += buf[offset + rlen : ]
+        possible_strings = list(strings(buf))
+
+        if possible_strings:
+            rstring, offset = random.choice(possible_strings)
+            mod_buf = buf[:offset] + replacement + buf[offset+len(rstring):]
+        else:
+            offset = random.randrange(len(buf))
+            mod_buf = buf[:offset] + replacement
+
+            # Only in case the replacement fits into
+            # the original buffer
+            if offset + rlen < len(buf):
+                mod_buf += buf[offset + rlen:]
 
         if self.debug:
             print "=== [debug] Substitute string"
