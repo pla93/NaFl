@@ -3,7 +3,7 @@
 #
 
 from Queue import PriorityQueue
-from sample_min import sub_queue_min
+from minimization_utils import sub_queue_min
 
 
 mutationQueue = PriorityQueue()
